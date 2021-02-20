@@ -34,9 +34,9 @@ const server = new ApolloServer({schema});
 
 server.applyMiddleware({app, path: '/', cors: true});
 
-exports.graphql = functions.https.onRequest(app);
+exports.graphql = functions.region('europe-west3').https.onRequest(app);
 
-exports.uploadFile = functions.https.onRequest((req, res) => {
+exports.uploadFile = functions.region('europe-west3').https.onRequest((req, res) => {
 cors(req, res, () => {
     if (req.method !== "POST") {
     return res.status(500).json({
