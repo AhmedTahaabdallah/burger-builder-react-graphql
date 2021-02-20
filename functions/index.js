@@ -45,16 +45,31 @@ cors(req, res, () => {
     }
     const busboy = new Busboy({ headers: req.headers });
     let uploadData = null;
+    let folderPath = '';
+
 
     busboy.on("file", (fieldname, file, filename, encoding, mimetype) => {
     const filepath = path.join(os.tmpdir(), filename);
-    uploadData = { file: filepath, type: mimetype };
+    if(mimetype.includes('image')){
+        folderPath = 'images/';
+    } else if(mimetype.includes('audio')){
+        folderPath = 'audios/';
+    } else if(mimetype.includes('video')){
+        folderPath = 'videos/';
+    } else if(mimetype.includes('application')){
+        folderPath = mimetype.split('/')[1] + '/';
+    } else {
+        folderPath = 'others/';
+    }
+    uploadData = { file: filepath, type: mimetype, fieldname: filename };
     file.pipe(fs.createWriteStream(filepath));
     });
 
     busboy.on("finish", () => {
     const bucket = gcs.bucket("burger-builder-react-eb8cd.appspot.com");
-    bucket.upload(uploadData.file, function(err, file) {
+    bucket.upload(uploadData.file, {
+        destination: folderPath + uploadData.fieldname
+    }, function(err, file) {
         if (err) {
             res.status(500).json({
                 error: err
@@ -64,6 +79,7 @@ cors(req, res, () => {
         res.status(200).json({
             message: "file uploaded...",
             file: file.metadata.mediaLink,
+            //type: uploadData.type
         });
       });
     });
