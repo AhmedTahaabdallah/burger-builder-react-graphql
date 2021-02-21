@@ -35,9 +35,19 @@ const server = new ApolloServer({schema});
 
 server.applyMiddleware({app, path: '/', cors: true});
 
-exports.graphql = functions.region('europe-west3').https.onRequest(app);
+const graphqlFileRuntimeOpts = {
+    timeoutSeconds: 120,
+    memory: '1GB'
+};
 
-exports.uploadFile = functions.region('europe-west3').https.onRequest((req, res) => {
+exports.graphql = functions.runWith(graphqlFileRuntimeOpts).region('europe-west3').https.onRequest(app);
+
+const uploadFileRuntimeOpts = {
+    timeoutSeconds: 540,
+    memory: '4GB'
+};
+
+exports.uploadFile = functions.runWith(uploadFileRuntimeOpts).region('europe-west3').https.onRequest((req, res) => {
 cors(req, res, () => {
     if (req.method !== "POST") {
     return res.status(500).json({
@@ -50,7 +60,7 @@ cors(req, res, () => {
 
     busboy.on("file", (fieldname, file, filename, encoding, mimetype) => {
         let folderPath = '';
-        const filepath = path.join(os.tmpdir(), filename);
+        const filepath = path.join(os.tmpdir(), filename);        
         if(mimetype.includes('image')){
             folderPath = 'images/';
         } else if(mimetype.includes('audio')){
