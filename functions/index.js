@@ -45,11 +45,11 @@ cors(req, res, () => {
     });
     }
     const busboy = new Busboy({ headers: req.headers });
-    let uploadData = null;
-    let folderPath = '';
+    let uploadData = [];    
     const bucket = gcs.bucket("burger-builder-react-eb8cd.appspot.com");
 
     busboy.on("file", (fieldname, file, filename, encoding, mimetype) => {
+        let folderPath = '';
         const filepath = path.join(os.tmpdir(), filename);
         if(mimetype.includes('image')){
             folderPath = 'images/';
@@ -86,27 +86,46 @@ cors(req, res, () => {
                     // coun++;
                 }                
             }
-            uploadData = { file: filepath, type: mimetype, fieldname: nnewFileName };
+            uploadData.push({ 
+                file: filepath, 
+                folderPath: folderPath,
+                type: mimetype, 
+                oldName: filename, 
+                fieldname: nnewFileName 
+            });
             file.pipe(fs.createWriteStream(filepath));
         });          
     });
 
     busboy.on("finish", () => {
-        bucket.upload(uploadData.file, {
-            destination: folderPath + uploadData.fieldname
-        }, function(err, file) {
-            if (err) {
-                res.status(500).json({
-                    error: err
-                });
-                return;
-            }
-            res.status(200).json({
-                message: "file uploaded...",
-                file: file.metadata.mediaLink,
-                //type: uploadData.type
-            });
-        }); 
+        let finalUploadData = [];
+        let newUploadData = [...uploadData];
+        newUploadData.forEach((data, index, array) => {
+            bucket.upload(data.file, {
+                destination: data.folderPath + data.fieldname
+            }, function(err, file) {
+                if (err) {
+                    finalUploadData.push({
+                        message: "file not uploaded...",
+                        fileName: data.oldName,
+                        filePath: null
+                    });
+                } else {
+                    finalUploadData.push({
+                        message: "file uploaded...",
+                        fileName: data.oldName,
+                        filePath: file.metadata.mediaLink,
+                    });
+                }
+                console.log(index);
+                const newFinalUploadData = [...finalUploadData];
+                if (newFinalUploadData.length === array.length) {
+                    res.status(200).json({
+                        data: [newFinalUploadData],
+                    }); 
+                }
+            });             
+        });
     });
     
     busboy.end(req.rawBody);
