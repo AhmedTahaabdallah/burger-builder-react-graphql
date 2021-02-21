@@ -14,6 +14,7 @@ const Busboy = require("busboy");
 const fs = require("fs");
 
 const {Storage} = require('@google-cloud/storage');
+const crypto = require("crypto");
 
 const gcs = new Storage({
     projectId: 'burger-builder-react-eb8cd',
@@ -46,42 +47,66 @@ cors(req, res, () => {
     const busboy = new Busboy({ headers: req.headers });
     let uploadData = null;
     let folderPath = '';
-
+    const bucket = gcs.bucket("burger-builder-react-eb8cd.appspot.com");
 
     busboy.on("file", (fieldname, file, filename, encoding, mimetype) => {
-    const filepath = path.join(os.tmpdir(), filename);
-    if(mimetype.includes('image')){
-        folderPath = 'images/';
-    } else if(mimetype.includes('audio')){
-        folderPath = 'audios/';
-    } else if(mimetype.includes('video')){
-        folderPath = 'videos/';
-    } else if(mimetype.includes('application')){
-        folderPath = mimetype.split('/')[1] + '/';
-    } else {
-        folderPath = 'others/';
-    }
-    uploadData = { file: filepath, type: mimetype, fieldname: filename };
-    file.pipe(fs.createWriteStream(filepath));
+        const filepath = path.join(os.tmpdir(), filename);
+        if(mimetype.includes('image')){
+            folderPath = 'images/';
+        } else if(mimetype.includes('audio')){
+            folderPath = 'audios/';
+        } else if(mimetype.includes('video')){
+            folderPath = 'videos/';
+        } else if(mimetype.includes('application')){
+            folderPath = mimetype.split('/')[1] + '/';
+        } else {
+            folderPath = 'others/';
+        }
+        let nnewFileName = filename;
+        const newName = crypto.randomBytes(20).toString('hex');
+        const list = nnewFileName.split('.');
+        nnewFileName = newName + '.' + list[list.length - 1];
+        bucket.getFiles((err, files) => {
+            if (!err) {
+                // files is an array of File objects.
+                let isExis = true;
+                //let coun = 1;
+                while (isExis) {
+                    isExis = false;
+                    files.forEach(fi => {
+                        if(fi.metadata.name === folderPath + nnewFileName){
+                            isExis = true;
+                            console.log("File exist");                        
+                            const newName = crypto.randomBytes(20).toString('hex');
+                            const list = nnewFileName.split('.');
+                            nnewFileName = newName + '.' + list[list.length - 1];
+                        }          
+                    });   
+                    // console.log(coun);
+                    // coun++;
+                }                
+            }
+            uploadData = { file: filepath, type: mimetype, fieldname: nnewFileName };
+            file.pipe(fs.createWriteStream(filepath));
+        });          
     });
 
     busboy.on("finish", () => {
-    const bucket = gcs.bucket("burger-builder-react-eb8cd.appspot.com");
-    bucket.upload(uploadData.file, {
-        destination: folderPath + uploadData.fieldname
-    }, function(err, file) {
-        if (err) {
-            res.status(500).json({
-                error: err
+        bucket.upload(uploadData.file, {
+            destination: folderPath + uploadData.fieldname
+        }, function(err, file) {
+            if (err) {
+                res.status(500).json({
+                    error: err
+                });
+                return;
+            }
+            res.status(200).json({
+                message: "file uploaded...",
+                file: file.metadata.mediaLink,
+                //type: uploadData.type
             });
-            return;
-        }
-        res.status(200).json({
-            message: "file uploaded...",
-            file: file.metadata.mediaLink,
-            //type: uploadData.type
-        });
-      });
+        }); 
     });
     
     busboy.end(req.rawBody);
