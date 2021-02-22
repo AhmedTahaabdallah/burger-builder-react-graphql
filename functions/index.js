@@ -30,11 +30,18 @@ admin.initializeApp({
 
 const schema = makeExecutableSchema({
     typeDefs,
-    resolvers,
+    resolvers
 });
 
 const app = express();
-const server = new ApolloServer({schema});
+const server = new ApolloServer({
+    schema,
+    context: async ({ req }) => {
+        return {
+            req
+        };
+    },
+});
 
 server.applyMiddleware({app, path: '/', cors: true});
 
