@@ -9,12 +9,7 @@ exports.getAllOrdersProcess = function getAllOrdersProcess(admin) {
               'id': orderId,
               'price': orderData.price,
               'deliveryMethod': orderData.deliveryMethod,
-              'ingredients': {
-                'bacon': orderData.ingredients.bacon,
-                'cheese': orderData.ingredients.cheese,
-                'meat': orderData.ingredients.meat,
-                'salad': orderData.ingredients.salad,
-              },
+              'ingredients': orderData.ingredients,
               'customer': {
                   'email': orderData.customer.email,
                   'name': orderData.customer.name,

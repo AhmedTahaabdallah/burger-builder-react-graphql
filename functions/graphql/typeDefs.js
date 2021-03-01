@@ -1,4 +1,6 @@
 const typeDefs = `
+    scalar JSON
+
     type CustomerAddress {
         country: String
         street: String
@@ -11,32 +13,32 @@ const typeDefs = `
         address: CustomerAddress
     }
 
-    type Ingredients {
-        bacon: Int
-        cheese: Int
-        meat: Int
-        salad: Int
-    }
-
     type oneOrder {
         id: String!
         price: Float
         deliveryMethod: String
-        ingredients: Ingredients
+        ingredients: JSON
         customer: Customer
     }
 
     type oneOrderOutput {
         status: String
         msg: String
+        orderId: String
+    }
+
+    type allIngredients {
+        totalPrice: Float
+        ingredients: JSON
     }
 
     type Query {
+        getAllIngredients: allIngredients
         getAllOrders: [oneOrder]
     }
 
     type Mutation {
-        createNewOrde(price: Float!, deliveryMethod: String!, email: String!, name: String!, country: String!, street: String!, zipCode: String!, bacon: Int!, cheese: Int!, meat: Int!, salad: Int!): oneOrderOutput!
+        createNewOrder(price: Float!, deliveryMethod: String!, email: String!, name: String!, country: String!, street: String!, zipCode: String!, ingredients: JSON): oneOrderOutput!
     }
 `;
 

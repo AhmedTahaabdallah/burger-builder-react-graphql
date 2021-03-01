@@ -1,5 +1,5 @@
 
-exports.createNewOrder = async function createNewOrder(admin, price, deliveryMethod, email, name, country, street, zipCode, bacon, cheese, meat, salad) {
+exports.createNewOrder = async function createNewOrder(admin, price, deliveryMethod, email, name, country, street, zipCode, ingredients) {
     console.log(deliveryMethod);
     const ordersCollection = admin.firestore().collection('orders');
     const FieldValue = admin.firestore.FieldValue;
@@ -15,23 +15,20 @@ exports.createNewOrder = async function createNewOrder(admin, price, deliveryMet
                 zipCode: zipCode,
             }
         },
-        ingredients: {
-            bacon: bacon,
-            cheese: cheese,
-            meat: meat,
-            salad: salad,
-        },
+        ingredients: ingredients,
         'create_at': FieldValue.serverTimestamp(),
     });
     if(newOrder) {
         return {
             'status': 'done',
-            'msg': 'Order Created..'
+            'msg': 'Order Created..',
+            'orderId': newOrder.id
         };
     } else {
         return {
             'status': 'notdone',
-            'msg': 'Order not Created..'
+            'msg': 'Order not Created..',
+            'orderId': null
         };
     }    
 }
