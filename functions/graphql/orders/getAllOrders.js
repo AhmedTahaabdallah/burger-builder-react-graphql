@@ -1,6 +1,15 @@
+const { getUserToken } = require('../../helper/token');
 
-exports.getAllOrdersProcess = function getAllOrdersProcess(admin) {
-    return admin.firestore().collection('orders').orderBy('create_at', 'desc').get().then(snapshot => {
+exports.getAllOrdersProcess = async function getAllOrdersProcess(admin, req) {
+    const userId = await getUserToken(admin, req);
+    if(!userId) {
+        return {
+            status: 401,
+            msg: 'not Auth...',
+            allOrders: []
+        };
+    }    
+    return admin.firestore().collection('orders').where('userId', '==', userId).orderBy('create_at', 'desc').get().then(snapshot => {
         let data = [];
         snapshot.forEach(doc => {
             const orderId = doc.id;
@@ -22,6 +31,10 @@ exports.getAllOrdersProcess = function getAllOrdersProcess(admin) {
             };
             data.push(oneData);
         });
-        return data;
+        return {
+            status: 200,
+            msg: 'get all orders successfull...',
+            allOrders: data
+        };
     });
 }

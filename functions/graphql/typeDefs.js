@@ -32,13 +32,29 @@ const typeDefs = `
         ingredients: JSON
     }
 
+    type authUser {
+        status: String
+        msg: String
+        id: String
+        tokken: String
+        username: String
+    }
+
+    type allOrders {
+        status: String
+        msg: String
+        allOrders: [oneOrder]
+    }
+
     type Query {
         getAllIngredients: allIngredients
-        getAllOrders: [oneOrder]
+        getAllOrders: allOrders
     }
 
     type Mutation {
         createNewOrder(price: Float!, deliveryMethod: String!, email: String!, name: String!, country: String!, street: String!, zipCode: String!, ingredients: JSON): oneOrderOutput!
+        createNewUser(username: String!, email: String!, password: String!): authUser!
+        userLogin(email: String!, password: String!): authUser!
     }
 `;
 
