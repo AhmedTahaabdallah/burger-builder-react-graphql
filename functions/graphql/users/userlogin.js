@@ -38,7 +38,7 @@ exports.userLogin =  async function userLogin(admin, email, password) {
         if(!isEqual){
             return {
                 'status': 201,
-                'msg': 'Password is incorrect...',
+                'msg': 'The email or password you entered is incorrect...',
                 'id': null,
                 'tokken': null,
                 'username': null
@@ -55,7 +55,7 @@ exports.userLogin =  async function userLogin(admin, email, password) {
     } else {
         return {
             'status': 201,
-            'msg': 'email not found..',
+            'msg': 'The email or password you entered is incorrect..',
             'id': null,
             'tokken': null,
             'username': null
